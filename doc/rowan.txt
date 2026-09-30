@@ -18,7 +18,7 @@ rowan is a pure-ASCII alternative to markdown for day-to-day notes. Files are
 `.txt`, laid out for 100 columns, and read well with `cat`. This plugin
 highlights the format and adds keys for headings, lists, tables and links.
 
-The format is specified in `docs/spec.txt` in the repository.
+The format is specified in `spec/spec.txt` in the repository.
 
 ==============================================================================
 2. Setup                                                         *rowan-setup*

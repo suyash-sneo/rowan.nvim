@@ -11,7 +11,7 @@ toggles, auto-aligned tables, cell navigation, links and outline pickers.
 
 STATUS: v0.1. The format and the plugin work day to day; expect small changes.
 
-See `docs/example.txt` for a complete example note.
+See `spec/example.txt` for a complete example note.
 
 == Why plain text ==================================================================================
 
@@ -71,7 +71,7 @@ and legible wherever they end up.
 
 A note link can point at a heading too: `[[Note|Heading]]`.
 
-Files are `.txt` and laid out for 100 columns. The full spec is in `docs/spec.txt`.
+Files are `.txt` and laid out for 100 columns. The full spec is in `spec/spec.txt`.
 
 == Install =========================================================================================
 
@@ -96,5 +96,5 @@ on. Press `<space>?` in a note to see every key, and read `:help rowan` for the 
 The plugin code is licensed under GPL-3.0. If you distribute modified versions, they must stay
 open source under the same license.
 
-The format spec and everything in `docs/` are licensed under CC BY 4.0. You can build your own
+The format spec and everything in `spec/` are licensed under CC BY 4.0. You can build your own
 tools, plugins or editors for the rowan format under any license, as long as you credit the spec.
