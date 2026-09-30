@@ -21,6 +21,19 @@ describe('parse.heading', function()
     assert.is_nil(parse.heading({ H1, '', H1 }, 2))
   end)
 
+  it('does not treat text between two H1s as a title', function()
+    local lines = { H1, 'Alpha', H1, 'loose', H1, 'Beta', H1 }
+    assert.is_nil(parse.heading(lines, 4))
+    assert.same({ level = 1, text = 'Beta', first = 5, last = 7 }, parse.heading(lines, 5))
+    assert.same({ level = 1, text = 'Alpha', first = 1, last = 3 }, parse.heading(lines, 3))
+  end)
+
+  it('finds stacked H1s with no gap', function()
+    local lines = { H1, 'A', H1, H1, 'B', H1 }
+    assert.same('A', parse.heading(lines, 3).text)
+    assert.same('B', parse.heading(lines, 4).text)
+  end)
+
   it('parses H2 and H3', function()
     assert.same({ level = 2, text = 'Backlog review', first = 1, last = 1 },
       parse.heading({ '== Backlog review ====' }, 1))

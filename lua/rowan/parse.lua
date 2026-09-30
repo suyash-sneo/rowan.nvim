@@ -4,13 +4,18 @@ local function is_h1_rule(line)
   return line ~= nil and line:match('^===+$') ~= nil
 end
 
-local function is_h1_title(lines, i)
+local function between_rules(lines, i)
   local line = lines[i]
   return line ~= nil
     and line:match('%S') ~= nil
     and not is_h1_rule(line)
     and is_h1_rule(lines[i - 1])
     and is_h1_rule(lines[i + 1])
+end
+
+-- The rule above must not already be the bottom rule of the H1 before it.
+local function is_h1_title(lines, i)
+  return between_rules(lines, i) and not is_h1_title(lines, i - 2)
 end
 
 -- Finds the H1 whose title or rules include line i; prefers the title above.

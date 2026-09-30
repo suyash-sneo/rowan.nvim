@@ -5,7 +5,8 @@ endif
 " Headings
 " nextgroup instead of a lookbehind: far faster, and the title wins over inline groups.
 syntax match rowanH1Rule /^===\+$/ nextgroup=rowanH1 skipnl
-syntax match rowanH1 /^\%(===\+$\)\@!.*\S.*\ze\n===\+$/ contained
+syntax match rowanH1 /^\%(===\+$\)\@!.*\S.*\ze\n===\+$/ contained nextgroup=rowanH1Close skipnl
+syntax match rowanH1Close /^===\+$/ contained
 syntax match rowanH2 /^== .*\S ===\+$/
 syntax match rowanH3 /^-- .*\S ---\+$/
 syntax match rowanDivider /^---\+$/
@@ -47,6 +48,7 @@ syntax match rowanQuote /^>.*$/
 syntax region rowanCode matchgroup=rowanCodeFence start=/^\~\~\~.*$/ end=/^\~\~\~$/ keepend
 
 highlight default link rowanH1Rule rowanH1
+highlight default link rowanH1Close rowanH1
 highlight default link rowanDivider Comment
 highlight default link rowanKvKey @property
 highlight default link rowanKvSep Comment
