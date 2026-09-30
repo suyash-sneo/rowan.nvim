@@ -1,0 +1,198 @@
+format  :: rowan plain-text notes
+version :: 0.1
+width   :: 100
+status  :: draft, agreed in interview 2026-09-29
+license :: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
+
+====================================================================================================
+Rowan notes format
+====================================================================================================
+
+A plain-text alternative to markdown for day-to-day notes, ticket details, daily logs and meeting
+notes. Everything is pure ASCII and meant to read well with `cat`, in any editor, or pasted
+anywhere. Structure is visible from the characters themselves, not from editor rendering.
+
+Files use the `.txt` extension. Lines are laid out for 100 columns.
+
+== Headings ========================================================================================
+
+Three levels, each with a different shape so they never get confused with each other.
+
+-- H1 - title --------------------------------------------------------------------------------------
+
+A full-width line of `=` above and below. The title text is kept exactly as typed.
+
+~~~
+====================================================================================================
+Sprint 42 planning
+====================================================================================================
+~~~
+
+-- H2 - section ------------------------------------------------------------------------------------
+
+A single line: `== ` then the text, then `=` padding to full width.
+
+~~~
+== Backlog review ==================================================================================
+~~~
+
+-- H3 - topic --------------------------------------------------------------------------------------
+
+A single line: `-- ` then the text, then `-` padding to full width.
+
+~~~
+-- Auth tickets ------------------------------------------------------------------------------------
+~~~
+
+A full-width line of only `-` with no text is a plain divider, not a heading.
+
+== Inline text =====================================================================================
+
+~~~
+STRONG      uppercase text                  Deploy is BLOCKED until the fix lands.
+soft        ==text==                        This is ==probably== fine.
+literal     `text`                          Restart `auth-svc` first.
+~~~
+
+STRONG is just uppercase, so the plugin cannot tell it apart from acronyms like API. Toggling it
+off lowercases the text.
+
+== Lists and tasks =================================================================================
+
+The bullet marker changes with the nesting level: `-`, then `*`, then `+`. Tasks have no dash.
+
+~~~
+- top-level bullet
+  * nested bullet
+    + deeper bullet
+[ ] open task
+[x] done task
+[>] moved to later
+~~~
+
+== Tables ==========================================================================================
+
+A full ASCII grid with a header rule. Cells are padded so the columns line up.
+
+~~~
++----------+-------+-----------+
+| Ticket   | Owner | Status    |
++----------+-------+-----------+
+| AUTH-112 | sneo  | in review |
+| PAY-88   | priya | blocked   |
++----------+-------+-----------+
+~~~
+
+== Code blocks =====================================================================================
+
+Fenced with `~~~`, with an optional language label after the opening fence.
+
+    ~~~ sh
+    kubectl get pods -n auth
+    ~~~
+
+== Links ===========================================================================================
+
+-- URLs --------------------------------------------------------------------------------------------
+
+A short URL is written inline as is, e.g. https://go/auth
+
+-- References --------------------------------------------------------------------------------------
+
+A long URL is replaced by a number in brackets, with the definition at the end of the H2 section
+where it is first used. Numbers are unique per file, and the plugin renumbers them in order of
+first use. A reference is always digits, so `[3]` never clashes with a task marker like `[ ]`.
+
+~~~
+See the outage timeline [1].
+
+[1] https://acme.atlassian.net/wiki/spaces/ENG/pages/482113/2026-09-28+Auth+outage+timeline
+~~~
+
+-- Note links --------------------------------------------------------------------------------------
+
+`[[Note]]` links to another note. `[[Note|Heading]]` links to an H1, H2 or H3 in that note.
+
+== Quotes and callouts =============================================================================
+
+~~~
+NOTE: staging is shared with the payments team this week.
+DECISION: we ship behind a flag, default off.
+BLOCKER: waiting on security sign-off for AUTH-112.
+
+> pasted message from Priya:
+> can we push the rollout to Thursday?
+~~~
+
+== Key-value block =================================================================================
+
+Optional. It goes at the very top of the file, before any heading, with one `key :: value` per
+line. The `::` separators are always aligned. The block ends at the first blank line or heading.
+There is no required metadata.
+
+====================================================================================================
+Neovim plugin
+====================================================================================================
+
+== Activation ======================================================================================
+
+The filetype is `rowan`. It activates for `*.txt` files under the configured `notes_dirs`, which
+is an empty list by default. Anywhere else, turn it on with `:set ft=rowan` or a modeline. All
+keys are buffer-local. P means `<space>`.
+
+== Keymaps =========================================================================================
+
++------------+------+----------------------------------------------------------+
+| Keys       | Mode | Action                                                   |
++------------+------+----------------------------------------------------------+
+| P1  P2  P3 | n    | make line H1 / H2 / H3                                   |
+| P0         | n    | back to plain text                                       |
+| Ph  PH     | n    | cycle heading level down / up                            |
+| >>  <<     | n    | on a heading: demote / promote                           |
+| Ps  Pi  Pc | n, v | toggle STRONG / ==soft== / `literal` (word or selection) |
+| Px         | n, v | cycle task: plain > [ ] > [x] > [ ]                      |
+| P>         | n, v | mark task moved [>]                                      |
+| Enter      | i    | continue bullet or task; empty item ends the list        |
+| Tab  S-Tab | i    | on a bullet: indent / outdent (marker - * +)             |
+| C-i  C-k   | i    | table: row up / row down (stops at edges)                |
+| C-j  C-l   | i    | table: previous cell / next cell (stops at edges)        |
+| Pa         | n    | align table now                                          |
+| PA         | n    | toggle live table alignment                              |
+| Pn         | n    | new table (asks for columns x rows)                      |
+| Pki  Pkd   | n    | table: insert / delete column                            |
+| Pkh  Pkl   | n    | table: move column left / right                          |
+| Pkr  Pkx   | n    | table: add row below / delete row                        |
+| ]]  [[     | n    | next / previous heading, any level                       |
+| ]1 ]2 ]3   | n    | next heading of that level (and [1 [2 [3 for previous)   |
+| Enter      | n    | follow a note link, a [n] reference or a URL             |
+| BS  C-o    | n    | go back                                                  |
+| Pl         | n    | pick a note or heading and insert a [[link]]             |
+| Pr         | n    | turn the URL under the cursor into a [n] reference       |
+| Po         | n    | outline of this file (fzf-lua)                           |
+| PO         | n    | headings across all notes (fzf-lua)                      |
+| Pf         | n    | find a note by name (fzf-lua)                            |
+| P/         | n    | grep all notes (fzf-lua)                                 |
++------------+------+----------------------------------------------------------+
+
+-- Coexistence -------------------------------------------------------------------------------------
+
+CoC keeps Tab, Shift-Tab and Enter whenever its completion menu is open. In a table, Tab and
+Enter behave as they normally do. The table Ctrl keys only act inside a table. In kitty, Neovim
+can tell Ctrl-i apart from Tab, but inside tmux or over SSH they may arrive as the same key.
+
+== Behaviour =======================================================================================
+
+- Tables re-align live while typing by default. The `live_align` option or PA switches it off,
+  after which Pa aligns on demand.
+- Folding follows the headings (H1 > H2 > H3). All folds are open when a file is opened.
+- Highlighting uses distinct color and bold per heading level, bold for STRONG, italic for
+  ==soft==, a code color for `literal`, dimmed done tasks and colored callouts. Markers are never
+  concealed.
+- Warnings for orphaned or unused references.
+
+== Later ===========================================================================================
+
+[ ] Obsidian converter: .md to .txt, including `#heading` to `|heading` and long URLs to references
+[ ] notes_dirs configuration
+[ ] templates (daily log, meeting, ticket)
+
