@@ -19,7 +19,10 @@ function M.setup(opts)
   vim.validate('keymaps', opts.keymaps, 'boolean', true)
 
   M.options = vim.tbl_deep_extend('force', M.defaults, opts)
-  M.options.notes_dirs = vim.tbl_map(vim.fs.normalize, M.options.notes_dirs)
+  M.options.notes_dirs = vim.tbl_map(function(dir)
+    dir = vim.fs.normalize(dir)
+    return vim.uv.fs_realpath(dir) or dir
+  end, M.options.notes_dirs)
 end
 
 return M
