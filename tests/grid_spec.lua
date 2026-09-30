@@ -1,4 +1,6 @@
 local grid = require('rowan.grid')
+local grid_edit = require('rowan.grid_edit')
+local keymaps = require('rowan.keymaps')
 local kv = require('rowan.kv')
 local parse = require('rowan.parse')
 
@@ -95,6 +97,83 @@ describe('grid.align', function()
     vim.b.rowan_live_align = false
     grid.on_text_changed()
     assert.same({ '|a|bb|' }, lines())
+  end)
+end)
+
+local abc = {
+  '+---+---+',
+  '| a | b |',
+  '+---+---+',
+  '| c | d |',
+  '| e | f |',
+  '+---+---+',
+}
+
+describe('grid.move', function()
+  it('moves between cells, skipping rules, and stops at the edges', function()
+    buffer(abc, 2, 2)
+    grid.move('right')
+    assert.same({ 2, 7 }, cursor())
+    grid.move('right')
+    assert.same({ 2, 7 }, cursor())
+    grid.move('down')
+    assert.same({ 4, 7 }, cursor())
+    grid.move('left')
+    assert.same({ 4, 3 }, cursor())
+    grid.move('up')
+    assert.same({ 2, 3 }, cursor())
+    grid.move('up')
+    assert.same({ 2, 3 }, cursor())
+  end)
+
+  it('lands at the start of an empty cell', function()
+    buffer({ '| abc |     |' }, 1, 3)
+    grid.move('right')
+    assert.same({ 1, 8 }, cursor())
+  end)
+
+  it('backs the insert-mode keys, which work as usual outside tables', function()
+    buffer({ '| a | b |', 'text' }, 1, 2)
+    keymaps.apply(0)
+    vim.api.nvim_feedkeys(vim.keycode('i<C-l>!<Esc>jA<C-j>x<Esc>'), 'xt', false)
+    assert.same({ '| a | b! |', 'text', 'x' }, lines())
+  end)
+
+  it('returns false outside a table', function()
+    buffer({ 'text' })
+    assert.is_false(grid.move('down'))
+  end)
+end)
+
+describe('grid_edit', function()
+  it('inserts, moves and deletes columns', function()
+    buffer(abc, 4, 2)
+    grid_edit.insert_column()
+    assert.same('| c |   | d |', lines()[4])
+    assert.same({ 4, 6 }, cursor())
+    grid_edit.move_column(-1)
+    assert.same('|   | a | b |', lines()[2])
+    assert.same('|   | c | d |', lines()[4])
+    grid_edit.delete_column()
+    assert.same(abc, lines())
+  end)
+
+  it('adds rows after the header rule and before the bottom rule', function()
+    buffer(abc, 2, 2)
+    grid_edit.add_row()
+    assert.same('|   |   |', lines()[4])
+    assert.same({ 4, 2 }, cursor())
+    vim.api.nvim_win_set_cursor(0, { 6, 2 })
+    grid_edit.add_row()
+    assert.same({ '|   |   |', '+---+---+' }, { lines()[7], lines()[8] })
+  end)
+
+  it('deletes rows without leaving two rules in a row', function()
+    buffer({ '+---+', '| a |', '+---+', '| b |', '+---+' }, 4, 2)
+    grid_edit.delete_row()
+    assert.same({ '+---+', '| a |', '+---+' }, lines())
+    grid_edit.delete_row()
+    assert.same({ '+---+', '| a |', '+---+' }, lines())
   end)
 end)
 

@@ -3,19 +3,6 @@ local parse = require('rowan.parse')
 
 local M = {}
 
--- The table around lnum, unless it is an example inside a code block.
-local function table_at(lnum)
-  if not parse.is_table_line(vim.fn.getline(lnum)) then
-    return
-  end
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  if parse.in_code(lines, lnum) then
-    return
-  end
-  local first, last = parse.table_range(lines, lnum)
-  return first, last, vim.list_slice(lines, first, last)
-end
-
 local function pipe_positions(line)
   local positions = {}
   for pos in line:gmatch('()|') do
@@ -24,62 +11,91 @@ local function pipe_positions(line)
   return positions
 end
 
--- The cell holding 0-based column col, how far into its text the cursor is, and its text.
--- keep_typed keeps spaces up to the cursor, so aligning while typing doesn't eat them.
-local function cursor_cell(line, col, keep_typed)
-  local pipes = pipe_positions(line)
-  local k = #vim.tbl_filter(function(pos)
-    return pos <= col
-  end, pipes)
-  local raw = parse.table_cells(line)[k]
-  if not raw then
-    return
-  end
-  local lead = #raw:match('^%s*')
-  local text = raw:sub(lead + 1)
-  local offset = math.max(0, col - pipes[k] - lead)
-  if keep_typed then
-    text = text:sub(1, offset) .. text:sub(offset + 1):gsub('%s+$', '')
-  else
-    text = vim.trim(text)
-  end
-  return k, math.min(offset, #text), text
-end
-
 -- While a row is being typed, show only the cells typed so far, so the next | starts the
 -- next cell instead of adding a column.
 local function only_typed_cells(line, count)
   return line:sub(1, pipe_positions(line)[count + 1])
 end
 
-local function align(opts)
-  local lnum, col = unpack(vim.api.nvim_win_get_cursor(0))
-  local first, last, lines = table_at(lnum)
-  if not first then
-    return false
+-- The cell holding 0-based column col, and how far into the cell's text the cursor is.
+local function cell_at(line, col)
+  local pipes = pipe_positions(line)
+  local k = #vim.tbl_filter(function(pos)
+    return pos <= col
+  end, pipes)
+  local raw = parse.table_cells(line)[k]
+  if raw then
+    return k, math.max(0, col - pipes[k] - #raw:match('^%s*'))
   end
-  local rows = parse.parse_table(lines)
-  local r = lnum - first + 1
-  local k, offset, text = cursor_cell(lines[r], col, opts.keep_typed)
-  if k then
-    rows[r][k] = text
-  end
+end
 
-  local new = parse.render_table(rows, lines[1]:match('^%s*'))
-  if new and opts.keep_typed and rows[r] ~= 'rule' then
-    new[r] = only_typed_cells(new[r], math.max(1, #rows[r]))
+--- The table under the cursor, unless it is an example in a code block: { first, last,
+--- lines, rows (from parse_table), r (cursor row), k and offset (cursor cell, if any) }.
+function M.current()
+  local lnum, col = unpack(vim.api.nvim_win_get_cursor(0))
+  if not parse.is_table_line(vim.fn.getline(lnum)) then
+    return
   end
-  if not new or vim.deep_equal(new, lines) then
-    return true
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  if parse.in_code(lines, lnum) then
+    return
+  end
+  local first, last = parse.table_range(lines, lnum)
+  local t = { first = first, last = last, lines = vim.list_slice(lines, first, last) }
+  t.rows = parse.parse_table(t.lines)
+  t.r = lnum - first + 1
+  t.k, t.offset = cell_at(t.lines[t.r], col)
+  return t
+end
+
+--- Replaces the lines of table t with rows, aligned. opts.keep_typed leaves the cursor row
+--- as typed so far, opts.join_undo joins the change to the previous undo step.
+function M.write(t, rows, opts)
+  opts = opts or {}
+  local new = parse.render_table(rows, t.lines[1]:match('^%s*'))
+  if new and opts.keep_typed and rows[t.r] ~= 'rule' then
+    new[t.r] = only_typed_cells(new[t.r], math.max(1, #rows[t.r]))
+  end
+  if not new or vim.deep_equal(new, t.lines) then
+    return
   end
   if opts.join_undo then
     pcall(vim.cmd.undojoin)
   end
-  vim.api.nvim_buf_set_lines(0, first - 1, last, false, new)
-  if k then
-    col = pipe_positions(new[r])[k] + 1 + offset
+  vim.api.nvim_buf_set_lines(0, t.first - 1, t.last, false, new)
+end
+
+--- Puts the cursor offset bytes into the text of cell k on line lnum, or at the end of it.
+function M.put_cursor(lnum, k, offset)
+  local line = vim.fn.getline(lnum)
+  local cells = parse.table_cells(line)
+  if #cells == 0 then
+    return
   end
-  vim.api.nvim_win_set_cursor(0, { lnum, math.min(col, #new[r]) })
+  k = math.min(k, #cells)
+  local text_start = cells[k]:find('%S') or math.min(2, #cells[k] + 1)
+  local col = pipe_positions(line)[k] + text_start - 1 + (offset or #vim.trim(cells[k]))
+  vim.api.nvim_win_set_cursor(0, { lnum, math.min(col, #line) })
+end
+
+-- The spaces before the cursor are kept, so live align doesn't eat a space just typed.
+local function typed_text(raw, offset)
+  local text = raw:gsub('^%s+', '')
+  return text:sub(1, offset) .. text:sub(offset + 1):gsub('%s+$', '')
+end
+
+local function align(opts)
+  local t = M.current()
+  if not t then
+    return false
+  end
+  if t.k and opts.keep_typed then
+    t.rows[t.r][t.k] = typed_text(parse.table_cells(t.lines[t.r])[t.k], t.offset)
+  end
+  M.write(t, t.rows, opts)
+  if t.k then
+    M.put_cursor(t.first + t.r - 1, t.k, math.min(t.offset, #t.rows[t.r][t.k]))
+  end
   return true
 end
 
@@ -105,43 +121,24 @@ function M.toggle_live_align()
   vim.notify('rowan: live table align ' .. (vim.b.rowan_live_align and 'on' or 'off'))
 end
 
-local function empty_row(columns)
-  local row = {}
-  for k = 1, columns do
-    row[k] = ''
-  end
-  return row
-end
+local steps = { up = { -1, 0 }, down = { 1, 0 }, left = { 0, -1 }, right = { 0, 1 } }
 
-local function empty_table(columns, rows)
-  local grid = { 'rule', empty_row(columns), 'rule' }
-  for _ = 1, rows do
-    table.insert(grid, empty_row(columns))
+--- Moves to the end of the neighbouring cell, stopping at the table's edges. Returns false
+--- outside a table cell.
+function M.move(dir)
+  local t = M.current()
+  if not (t and t.k) then
+    return false
   end
-  table.insert(grid, 'rule')
-  return parse.render_table(grid, '')
-end
-
---- Asks for a size like 3x2 (columns x rows) and inserts an empty table below the cursor.
-function M.new()
-  vim.ui.input({ prompt = 'Table size (columns x rows): ', default = '3x2' }, function(input)
-    local columns, rows = (input or ''):match('^%s*(%d+)%s*[xX]%s*(%d+)%s*$')
-    if not columns or tonumber(columns) == 0 then
-      return
-    end
-    local lnum = vim.fn.line('.')
-    local lines = empty_table(tonumber(columns), tonumber(rows))
-    local gap = vim.fn.getline(lnum):match('%S') and 1 or 0
-    if gap == 1 then
-      table.insert(lines, 1, '')
-    end
-    if vim.fn.getline(lnum + 1):match('%S') then
-      table.insert(lines, '')
-    end
-    vim.api.nvim_buf_set_lines(0, lnum, lnum, false, lines)
-    local header = lnum + gap + 2
-    vim.api.nvim_win_set_cursor(0, { header, 2 })
-  end)
+  local dr, dk = unpack(steps[dir])
+  local r, k = t.r + dr, t.k + dk
+  while t.rows[r] == 'rule' do
+    r = r + dr
+  end
+  if t.rows[r] and k >= 1 and k <= #t.rows[t.r] then
+    M.put_cursor(t.first + r - 1, k)
+  end
+  return true
 end
 
 return M

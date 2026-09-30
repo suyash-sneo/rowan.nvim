@@ -1,7 +1,9 @@
 local config = require('rowan.config')
 local grid = require('rowan.grid')
+local grid_edit = require('rowan.grid_edit')
 local heading = require('rowan.heading')
 local inline = require('rowan.inline')
+local keys = require('rowan.keys')
 local kv = require('rowan.kv')
 local list = require('rowan.list')
 local nav = require('rowan.nav')
@@ -86,7 +88,33 @@ add('Tables', 'n', 'Pa', 'Align table (or key :: value block)', function()
   end
 end)
 add('Tables', 'n', 'PA', 'Toggle live table align', grid.toggle_live_align)
-add('Tables', 'n', 'Pn', 'New table (asks for columns x rows)', grid.new)
+add('Tables', 'n', 'Pn', 'New table (asks for columns x rows)', grid_edit.new)
+add('Tables', 'n', 'Pki', 'Insert column after this one', grid_edit.insert_column)
+add('Tables', 'n', 'Pkd', 'Delete column', grid_edit.delete_column)
+add('Tables', 'n', 'Pkh', 'Move column left', function()
+  grid_edit.move_column(-1)
+end)
+add('Tables', 'n', 'Pkl', 'Move column right', function()
+  grid_edit.move_column(1)
+end)
+add('Tables', 'n', 'Pkr', 'Add row below', grid_edit.add_row)
+add('Tables', 'n', 'Pkx', 'Delete row', grid_edit.delete_row)
+
+-- Outside a table these keys keep their usual insert-mode meaning.
+local cell_moves = {
+  { '<C-i>', 'up', 'Table: cell above' },
+  { '<C-k>', 'down', 'Table: cell below' },
+  { '<C-j>', 'left', 'Table: previous cell' },
+  { '<C-l>', 'right', 'Table: next cell' },
+}
+for _, move in ipairs(cell_moves) do
+  local key, dir, desc = unpack(move)
+  add('Tables (insert mode)', 'i', key, desc, function()
+    if not grid.move(dir) then
+      keys.fall_back('i', key)
+    end
+  end)
+end
 
 local function expand(lhs)
   return (lhs:gsub('^P', function()
