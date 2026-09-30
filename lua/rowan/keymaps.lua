@@ -5,6 +5,7 @@ local heading = require('rowan.heading')
 local inline = require('rowan.inline')
 local keys = require('rowan.keys')
 local kv = require('rowan.kv')
+local link = require('rowan.link')
 local list = require('rowan.list')
 local nav = require('rowan.nav')
 local pickers = require('rowan.pickers')
@@ -59,6 +60,13 @@ for level = 1, 3 do
   end)
 end
 add('Navigate', 'n', 'Po', 'Outline of this file', pickers.outline)
+add('Navigate', 'n', 'PO', 'Headings of all notes', pickers.all_headings)
+
+add('Links', 'n', '<CR>', 'Follow [[note]], [n] or URL', link.follow)
+add('Links', 'n', '<BS>', 'Go back', '<C-o>')
+add('Links', 'n', 'Pl', 'Insert [[link]] to a note', link.insert)
+add('Links', 'n', 'Pf', 'Find note', pickers.find)
+add('Links', 'n', 'P/', 'Search all notes', pickers.grep)
 
 local text = { 'n', 'x' }
 add('Inline', text, 'Ps', 'Toggle STRONG (uppercase)', function()
