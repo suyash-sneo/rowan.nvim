@@ -126,6 +126,12 @@ describe('grid.move', function()
     assert.same({ 2, 3 }, cursor())
   end)
 
+  it('opens the next cell of a row still being typed', function()
+    buffer({ '| a | b |', '| x |' }, 2, 2)
+    grid.move('right')
+    assert.same({ '| a | b |', '| x | ' }, lines())
+  end)
+
   it('lands at the start of an empty cell', function()
     buffer({ '| abc |     |' }, 1, 3)
     grid.move('right')

@@ -51,9 +51,21 @@ local function sort_definitions(lines, definitions)
   end
 end
 
---- Returns lines with references numbered 1, 2, 3... in order of first use.
+--- Returns lines with references numbered 1, 2, 3... in order of first use. Returns nil and
+--- the number of a reference with no definition instead, since renumbering it would hide
+--- which link was meant.
 function M.renumbered(lines)
   local uses, definitions = scan(lines)
+  local defined = {}
+  for _, definition in ipairs(definitions) do
+    defined[definition.n] = true
+  end
+  for _, use in ipairs(uses) do
+    if not defined[use.n] then
+      return nil, use.n
+    end
+  end
+
   local number, next_number = {}, 1
   for _, item in ipairs(vim.list_extend(vim.list_slice(uses), definitions)) do
     if not number[item.n] then
@@ -141,15 +153,19 @@ function M.from_url()
     end
   end
 
-  local renumbered = M.renumbered(lines)
-  replace_changed(old, renumbered)
+  replace_changed(old, M.renumbered(lines) or lines)
   vim.api.nvim_win_set_cursor(0, { lnum, s - 1 })
   M.check()
 end
 
 function M.renumber()
   local old = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  replace_changed(old, M.renumbered(old))
+  local new, missing = M.renumbered(old)
+  if new then
+    replace_changed(old, new)
+  else
+    vim.notify(('rowan: [%d] has no definition, so not renumbering'):format(missing), vim.log.levels.WARN)
+  end
   M.check()
 end
 

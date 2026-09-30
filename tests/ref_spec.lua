@@ -26,6 +26,10 @@ describe('ref.renumbered', function()
     )
   end)
 
+  it('refuses while a reference has no definition', function()
+    assert.same({ nil, 9 }, { ref.renumbered({ 'a [4] b [9]', '[4] https://a' }) })
+  end)
+
   it('leaves code blocks alone', function()
     local text = { '~~~', 'x[5]', '~~~', 'see [4]', '[4] https://a' }
     assert.same({ '~~~', 'x[5]', '~~~', 'see [1]', '[1] https://a' }, ref.renumbered(text))

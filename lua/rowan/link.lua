@@ -1,19 +1,19 @@
 local keys = require('rowan.keys')
-local nav = require('rowan.nav')
 local notes = require('rowan.notes')
 local parse = require('rowan.parse')
 local pickers = require('rowan.pickers')
 
 local M = {}
 
-local function goto_line(lnum)
+local function goto_pos(lnum, col)
   vim.cmd("normal! m'")
-  vim.api.nvim_win_set_cursor(0, { lnum, 0 })
+  vim.api.nvim_win_set_cursor(0, { lnum, col })
 end
 
 local function open_note(link)
   local path = notes.resolve(link.note)
   vim.cmd.edit(vim.fn.fnameescape(path))
+  vim.bo.filetype = 'rowan' -- a note linked from a note is one too, wherever it lives
   if not vim.uv.fs_stat(path) then
     vim.notify('rowan: new note ' .. link.note)
   end
@@ -22,7 +22,8 @@ local function open_note(link)
   end
   for _, h in ipairs(parse.headings(vim.api.nvim_buf_get_lines(0, 0, -1, false))) do
     if h.text:lower() == link.heading:lower() then
-      nav.goto_heading(h)
+      -- Opening the note already left a jumplist entry for <BS> to return to.
+      vim.api.nvim_win_set_cursor(0, { parse.title_pos(h) })
       return
     end
   end
@@ -36,8 +37,9 @@ local function follow_ref(n)
   end
   local want_definition = not is_definition(vim.api.nvim_get_current_line())
   for lnum, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
-    if is_definition(line) == want_definition and line:find('[' .. n .. ']', 1, true) then
-      goto_line(lnum)
+    local col = line:find('[' .. n .. ']', 1, true)
+    if is_definition(line) == want_definition and col then
+      goto_pos(lnum, col - 1)
       return
     end
   end

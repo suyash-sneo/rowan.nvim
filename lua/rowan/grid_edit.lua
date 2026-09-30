@@ -25,6 +25,9 @@ function M.new()
   vim.ui.input({ prompt = 'Table size (columns x rows): ', default = '3x2' }, function(input)
     local columns, rows = (input or ''):match('^%s*(%d+)%s*[xX]%s*(%d+)%s*$')
     if not columns or tonumber(columns) == 0 then
+      if input then
+        vim.notify('rowan: size should look like 3x2', vim.log.levels.WARN)
+      end
       return
     end
     local lnum = vim.fn.line('.')
@@ -48,14 +51,6 @@ local function cell_rows(rows)
   end, rows)
 end
 
-local function column_count(rows)
-  local count = 0
-  for _, row in ipairs(cell_rows(rows)) do
-    count = math.max(count, #row)
-  end
-  return count
-end
-
 -- Runs fn(rows, r, k) on the table under the cursor. fn edits rows in place, with every row
 -- padded to full width, and returns the cell to put the cursor in, or nothing to cancel.
 local function edit(fn)
@@ -63,7 +58,7 @@ local function edit(fn)
   if not (t and t.k) then
     return
   end
-  local columns = column_count(t.rows)
+  local columns = grid.column_count(t.rows)
   for _, row in ipairs(cell_rows(t.rows)) do
     vim.list_extend(row, empty_row(columns - #row))
   end
@@ -85,20 +80,20 @@ end
 
 function M.delete_column()
   edit(function(rows, r, k)
-    if column_count(rows) == 1 then
+    if grid.column_count(rows) == 1 then
       return
     end
     for _, row in ipairs(cell_rows(rows)) do
       table.remove(row, k)
     end
-    return r, math.min(k, column_count(rows))
+    return r, math.min(k, grid.column_count(rows))
   end)
 end
 
 function M.move_column(dir)
   edit(function(rows, r, k)
     local j = k + dir
-    if j < 1 or j > column_count(rows) then
+    if j < 1 or j > grid.column_count(rows) then
       return
     end
     for _, row in ipairs(cell_rows(rows)) do
@@ -115,7 +110,7 @@ function M.add_row()
     if rows[at] == 'rule' and rows[at + 1] then
       at = at + 1
     end
-    table.insert(rows, at, empty_row(column_count(rows)))
+    table.insert(rows, at, empty_row(grid.column_count(rows)))
     return at, k
   end)
 end
@@ -123,6 +118,7 @@ end
 function M.delete_row()
   edit(function(rows, r, k)
     if #cell_rows(rows) == 1 then
+      vim.notify('rowan: a table keeps at least one row', vim.log.levels.WARN)
       return
     end
     table.remove(rows, r)

@@ -72,9 +72,16 @@ end
 --- Opens a note, picked by file name.
 function M.find()
   if has_fzf() then
+    -- With one root, list paths relative to it so note names stay short and match cleanly.
+    local roots = notes.roots()
     local cmd = { 'rg', '--files', '--glob', '*.txt' }
-    vim.list_extend(cmd, notes.roots())
-    require('fzf-lua').files({ cmd = table.concat(vim.tbl_map(vim.fn.shellescape, cmd), ' ') })
+    if #roots > 1 then
+      vim.list_extend(cmd, roots)
+    end
+    require('fzf-lua').files({
+      cmd = table.concat(vim.tbl_map(vim.fn.shellescape, cmd), ' '),
+      cwd = #roots == 1 and roots[1] or nil,
+    })
     return
   end
   M.pick(notes.list(), 'Notes', notes.name, function(path)

@@ -121,6 +121,27 @@ function M.toggle_live_align()
   vim.notify('rowan: live table align ' .. (vim.b.rowan_live_align and 'on' or 'off'))
 end
 
+function M.column_count(rows)
+  local count = 0
+  for _, row in ipairs(rows) do
+    if row ~= 'rule' then
+      count = math.max(count, #row)
+    end
+  end
+  return count
+end
+
+-- In a row still being typed, moving right past its last cell opens the next one.
+local function open_next_cell(lnum)
+  local line = vim.fn.getline(lnum):gsub('%s+$', '')
+  if not line:match('|$') then
+    line = line .. ' |'
+  end
+  line = line .. ' '
+  vim.api.nvim_buf_set_lines(0, lnum - 1, lnum, false, { line })
+  vim.api.nvim_win_set_cursor(0, { lnum, #line })
+end
+
 local steps = { up = { -1, 0 }, down = { 1, 0 }, left = { 0, -1 }, right = { 0, 1 } }
 
 --- Moves to the end of the neighbouring cell, stopping at the table's edges. Returns false
@@ -137,6 +158,8 @@ function M.move(dir)
   end
   if t.rows[r] and k >= 1 and k <= #t.rows[t.r] then
     M.put_cursor(t.first + r - 1, k)
+  elseif dir == 'right' and k <= M.column_count(t.rows) then
+    open_next_cell(t.first + t.r - 1)
   end
   return true
 end
