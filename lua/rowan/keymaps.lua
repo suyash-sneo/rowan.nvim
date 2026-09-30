@@ -1,5 +1,7 @@
 local config = require('rowan.config')
 local heading = require('rowan.heading')
+local inline = require('rowan.inline')
+local list = require('rowan.list')
 local nav = require('rowan.nav')
 local pickers = require('rowan.pickers')
 
@@ -53,6 +55,20 @@ for level = 1, 3 do
   end)
 end
 add('Navigate', 'n', 'Po', 'Outline of this file', pickers.outline)
+
+local text = { 'n', 'x' }
+add('Inline', text, 'Ps', 'Toggle STRONG (uppercase)', function()
+  inline.toggle('strong')
+end)
+add('Inline', text, 'Pi', 'Toggle ==soft==', function()
+  inline.toggle('soft')
+end)
+add('Inline', text, 'Pc', 'Toggle `literal`', function()
+  inline.toggle('literal')
+end)
+
+add('Tasks', text, 'Px', 'Cycle task: plain > [ ] > [x] > [ ]', list.task_cycle)
+add('Tasks', text, 'P>', 'Mark task moved [>]', list.task_moved)
 
 local function expand(lhs)
   return (lhs:gsub('^P', function()

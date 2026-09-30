@@ -22,7 +22,7 @@ syntax match rowanKvSep /::/ contained
 syntax match rowanStrong /\<\u\{2,}\>\%(-\d\)\@!\%(\s\+\u\{2,}\>\%(-\d\)\@!\)\+\|\<\u\{4,}\>\%(-\d\)\@!/
 
 " Inline
-syntax region rowanSoft matchgroup=rowanMarker start=/==\ze[^= \t]/ end=/[^= \t]\zs==/ oneline
+syntax region rowanSoft matchgroup=rowanMarker start=/[[:alnum:]=]\@<!==\ze[^= \t]/ end=/[^= \t]\zs==[[:alnum:]=]\@!/ oneline
 syntax match rowanLiteral /`[^`]\+`/
 syntax match rowanUrl /\<https\?:\/\/\S*[^[:space:].,;:)]/
 syntax match rowanRef /\[\d\+\]/

@@ -79,6 +79,19 @@ function M.title_pos(h)
   return h.first, 3
 end
 
+--- Returns { indent, marker, task, text } for a bullet ('-', '*', '+') or task ([ ], [x], [>]).
+function M.list_item(line)
+  local indent, task, text = line:match('^(%s*)%[([ x>])%] (.*)$')
+  if indent then
+    return { indent = indent, task = task, text = text }
+  end
+  local marker
+  indent, marker, text = line:match('^(%s*)([-*+]) (.*)$')
+  if indent then
+    return { indent = indent, marker = marker, text = text }
+  end
+end
+
 local function padded(lead, text, fill, width)
   local line = lead .. ' ' .. text .. ' '
   local pad = math.max(3, width - vim.api.nvim_strwidth(line))
