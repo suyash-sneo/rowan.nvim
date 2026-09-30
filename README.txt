@@ -33,19 +33,19 @@ The goal of rowan is notes whose structure you can see without rendering them:
 The format is only half of it. Writing grids and padded rules by hand would be tedious, so the
 plugin does it for you, and typing a rowan note in Neovim is as quick as typing markdown.
 
-== Why rowan =======================================================================================
+== Why Rowan =======================================================================================
 
-The rowan, or mountain ash, is a small, hardy tree that grows where little else will, on
-mountainsides and in thin soil, and carries bright red berries into winter.
+Rowan is a small, hardy tree, known for growing high on exposed mountainsides where conditions are
+poor. For centuries it has also been associated with protection in the folklore of northern Europe.
 
-In Celtic and northern European folklore it is a tree of protection. Rowan twigs were hung over
-doors and byres, and crosses of rowan tied with red thread were worn to keep enchantment away, as an
-old Scottish rhyme has it: "rowan tree and red thread hold the witches all in dread". In the Norse
-myths, Thor was nearly swept away while wading the river Vimur and saved himself by catching hold of
-a rowan on the bank.
+Rowan takes its name from that idea: something beautiful that survives in sparse conditions, and
+protects what it carries.
 
-That is the spirit of this project: a small, sturdy format that keeps your notes safe from lock-in
-and legible wherever they end up.
+A Rowan document is still just text. It should remain readable without the plugin, portable without
+a particular editor, and understandable years after the software that created it is gone. Rowan adds
+structure and beauty without taking ownership of the words underneath.
+
+The editor may disappear. The file should survive.
 
 == Format at a glance ==============================================================================
 
