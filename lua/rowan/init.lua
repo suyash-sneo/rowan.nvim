@@ -47,7 +47,8 @@ function M.attach(buf)
   watch(buf)
 
   -- Folds made by foldexpr outlive it as manual folds, so drop them before restoring.
-  vim.b[buf].undo_ftplugin = 'setlocal foldmethod=manual | silent! normal! zE'
+  -- :normal would swallow the rest of the line, hence exe.
+  vim.b[buf].undo_ftplugin = 'setlocal foldmethod=manual | silent! exe "normal! zE"'
     .. ' | setlocal foldmethod< foldexpr< foldtext< foldlevel<'
     .. ' textwidth< autoindent< expandtab< shiftwidth< softtabstop< formatoptions<'
     .. " | lua require('rowan').detach(0)"

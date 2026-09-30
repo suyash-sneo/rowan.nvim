@@ -123,3 +123,16 @@ describe('fold', function()
     assert.same('=== Four  ... 4 lines', vim.fn.foldtextresult(9))
   end)
 end)
+
+describe(':Rowan off', function()
+  it('restores the buffer without touching its text', function()
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_set_current_buf(buf)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, { 'Title line' })
+    vim.bo.filetype = 'rowan'
+    assert.is_not.same('', vim.fn.maparg('<space>1', 'n'))
+    vim.bo.filetype = 'text'
+    assert.same({ 'Title line' }, vim.api.nvim_buf_get_lines(buf, 0, -1, false))
+    assert.same('', vim.fn.maparg('<space>1', 'n'))
+  end)
+end)
