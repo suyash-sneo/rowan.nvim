@@ -4,7 +4,7 @@ local parse = require('rowan.parse')
 
 local M = {}
 
-local WIDTH = 60
+local GAP = 4
 
 local function rows()
   local result = {}
@@ -17,24 +17,79 @@ local function rows()
   return result
 end
 
--- Rendered in the rowan format itself, so groups show up as highlighted H3 headings.
-local function build_lines()
+-- One block of lines per group, headed by an H3 so the rowan syntax highlights it.
+local function group_blocks()
   local all = rows()
   local key_width = 0
   for _, row in ipairs(all) do
     key_width = math.max(key_width, #row.key)
   end
 
-  local lines, group = {}, nil
+  local blocks, width = {}, 0
   for _, row in ipairs(all) do
-    if row.group ~= group then
-      group = row.group
-      if #lines > 0 then
-        table.insert(lines, '')
-      end
-      table.insert(lines, parse.render_heading(3, group, WIDTH)[1])
+    if #blocks == 0 or blocks[#blocks].group ~= row.group then
+      table.insert(blocks, { group = row.group })
     end
-    table.insert(lines, ('  %-' .. key_width .. 's   %s'):format(row.key, row.desc))
+    local line = ('  %-' .. key_width .. 's   %s'):format(row.key, row.desc)
+    table.insert(blocks[#blocks], line)
+    width = math.max(width, #line)
+  end
+  for _, block in ipairs(blocks) do
+    table.insert(block, 1, parse.render_heading(3, block.group, width)[1])
+  end
+  return blocks, width
+end
+
+-- Fills columns in order, starting a new one once a column reaches its share of the lines.
+local function split(blocks, count)
+  local total = 0
+  for _, block in ipairs(blocks) do
+    total = total + #block + 1
+  end
+  local target = math.ceil(total / count)
+
+  local columns = { {} }
+  for _, block in ipairs(blocks) do
+    local column = columns[#columns]
+    if #column > 0 and #column + #block > target and #columns < count then
+      column = {}
+      table.insert(columns, column)
+    end
+    if #column > 0 then
+      table.insert(column, '')
+    end
+    vim.list_extend(column, block)
+  end
+  return columns
+end
+
+local function side_by_side(columns, width)
+  local height = 0
+  for _, column in ipairs(columns) do
+    height = math.max(height, #column)
+  end
+  local lines = {}
+  for i = 1, height do
+    local parts = {}
+    for _, column in ipairs(columns) do
+      table.insert(parts, ('%-' .. width .. 's'):format(column[i] or ''))
+    end
+    lines[i] = (table.concat(parts, (' '):rep(GAP)):gsub('%s+$', ''))
+  end
+  return lines
+end
+
+-- At least two columns when they fit, more if the sheet is still taller than the screen.
+local function build_lines()
+  local blocks, width = group_blocks()
+  local fit = math.floor((vim.o.columns - 2 + GAP) / (width + GAP))
+  local most = math.max(1, math.min(fit, #blocks))
+  local lines
+  for count = math.min(2, most), most do
+    lines = side_by_side(split(blocks, count), width)
+    if #lines <= vim.o.lines - 4 then
+      break
+    end
   end
   return lines
 end
@@ -48,7 +103,11 @@ function M.open()
   vim.bo[buf].modifiable = false
 
   -- Leave room for the border so small terminals still show the whole float.
-  local width = math.min(WIDTH, vim.o.columns - 2)
+  local width = 0
+  for _, line in ipairs(lines) do
+    width = math.max(width, #line)
+  end
+  width = math.min(width, vim.o.columns - 2)
   local height = math.min(#lines, vim.o.lines - 4)
   vim.api.nvim_open_win(buf, true, {
     relative = 'editor',
