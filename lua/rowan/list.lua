@@ -97,12 +97,20 @@ function M.enter()
   elseif vim.trim(item.text) == '' then
     vim.api.nvim_set_current_line('')
   else
-    keys.feed(vim.keycode('<CR>') .. (item.task and '[ ] ' or item.marker .. ' '))
+    -- <C-g>u makes each item its own undo step, as Enter does without rowan.
+    keys.feed(vim.keycode('<C-g>u<CR>') .. (item.task and '[ ] ' or item.marker .. ' '))
   end
 end
 
+-- The next indent width in steps of shiftwidth, snapping odd widths onto the grid.
+local function shifted_width(indent, dir)
+  local steps = vim.fn.strdisplaywidth(indent) / vim.fn.shiftwidth()
+  steps = dir > 0 and math.floor(steps) + 1 or math.ceil(steps) - 1
+  return steps * vim.fn.shiftwidth()
+end
+
 local function shift_item(item, dir)
-  local width = #item.indent + dir * vim.fn.shiftwidth()
+  local width = shifted_width(item.indent, dir)
   if width < 0 then
     return
   end
