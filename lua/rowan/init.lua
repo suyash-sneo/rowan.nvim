@@ -16,9 +16,18 @@ function M.attach(buf)
   -- textwidth is for gq; don't hard-wrap while typing tables and URLs.
   bo.formatoptions = bo.formatoptions:gsub('t', '')
 
+  local opt = vim.opt_local
+  opt.foldmethod = 'expr'
+  opt.foldexpr = "v:lua.require'rowan.fold'.expr(v:lnum)"
+  opt.foldtext = "v:lua.require'rowan.fold'.text()"
+  opt.foldlevel = 99
+
   keymaps.apply(buf)
 
-  vim.b[buf].undo_ftplugin = 'setlocal textwidth< expandtab< shiftwidth< softtabstop< formatoptions<'
+  -- Folds made by foldexpr outlive it as manual folds, so drop them before restoring.
+  vim.b[buf].undo_ftplugin = 'setlocal foldmethod=manual | silent! normal! zE'
+    .. ' | setlocal foldmethod< foldexpr< foldtext< foldlevel<'
+    .. ' textwidth< expandtab< shiftwidth< softtabstop< formatoptions<'
     .. " | lua require('rowan.keymaps').remove(0)"
 end
 

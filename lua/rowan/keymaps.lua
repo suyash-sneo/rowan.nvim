@@ -1,5 +1,7 @@
 local config = require('rowan.config')
 local heading = require('rowan.heading')
+local nav = require('rowan.nav')
+local pickers = require('rowan.pickers')
 
 local M = {}
 
@@ -34,6 +36,23 @@ end)
 add('Headings', 'n', '<<', 'Promote heading (or outdent line)', function()
   heading.shift(-1)
 end)
+
+local motion = { 'n', 'x', 'o' }
+add('Navigate', motion, ']]', 'Next heading', function()
+  nav.jump(1)
+end)
+add('Navigate', motion, '[[', 'Previous heading', function()
+  nav.jump(-1)
+end)
+for level = 1, 3 do
+  add('Navigate', motion, ']' .. level, 'Next H' .. level, function()
+    nav.jump(1, level)
+  end)
+  add('Navigate', motion, '[' .. level, 'Previous H' .. level, function()
+    nav.jump(-1, level)
+  end)
+end
+add('Navigate', 'n', 'Po', 'Outline of this file', pickers.outline)
 
 local function expand(lhs)
   return (lhs:gsub('^P', function()

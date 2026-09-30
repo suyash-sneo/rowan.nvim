@@ -54,6 +54,37 @@ describe('parse.heading', function()
   end)
 end)
 
+describe('parse.headings', function()
+  it('lists every heading in order', function()
+    local lines = { 'intro', H1, 'One', H1, '== Two ===', 'text', '-- Three ---', H1, 'Four', H1 }
+    local found = vim.tbl_map(function(h)
+      return { h.level, h.text, h.first }
+    end, parse.headings(lines))
+    assert.same({ { 1, 'One', 2 }, { 2, 'Two', 5 }, { 3, 'Three', 7 }, { 1, 'Four', 8 } }, found)
+  end)
+
+  it('skips headings inside code blocks', function()
+    local lines = { '~~~ sh', '== Not a heading ===', '~~~', '== Real ===' }
+    assert.same({ 'Real' }, vim.tbl_map(function(h)
+      return h.text
+    end, parse.headings(lines)))
+  end)
+
+  it('agrees with heading() on text between two H1s', function()
+    local lines = { H1, 'Alpha', H1, 'loose', H1, 'Beta', H1 }
+    assert.same({ 'Alpha', 'Beta' }, vim.tbl_map(function(h)
+      return h.text
+    end, parse.headings(lines)))
+  end)
+end)
+
+describe('parse.title_pos', function()
+  it('points at the title text', function()
+    assert.same({ 5, 0 }, { parse.title_pos({ level = 1, first = 4 }) })
+    assert.same({ 4, 3 }, { parse.title_pos({ level = 2, first = 4 }) })
+  end)
+end)
+
 describe('parse.render_heading', function()
   it('renders each level to the given width', function()
     assert.same({ H1, 'Title', H1 }, parse.render_heading(1, 'Title', 10))

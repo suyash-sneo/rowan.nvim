@@ -34,9 +34,11 @@ local function replace(h, level)
     vim.api.nvim_buf_set_lines(0, h.first - 1, h.last, false, new)
   end
 
-  local title_lnum = h.first + (level == 1 and 1 or 0)
-  local title_col = (level == 2 or level == 3) and 3 or 0
-  vim.api.nvim_win_set_cursor(0, { title_lnum, title_col })
+  if level == 0 then
+    vim.api.nvim_win_set_cursor(0, { h.first, 0 })
+  else
+    vim.api.nvim_win_set_cursor(0, { parse.title_pos({ level = level, first = h.first }) })
+  end
 end
 
 --- Makes the line or heading under the cursor the given level; 0 turns it into plain text.

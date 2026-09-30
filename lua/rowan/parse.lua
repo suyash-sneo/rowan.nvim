@@ -27,14 +27,11 @@ local function h1_title_near(lines, i)
   end
 end
 
---- Returns { level, text, first, last } if line i is part of a heading.
-function M.heading(lines, i)
-  local t = h1_title_near(lines, i)
-  if t then
-    return { level = 1, text = vim.trim(lines[t]), first = t - 1, last = t + 1 }
-  end
+local function h1(lines, title)
+  return { level = 1, text = vim.trim(lines[title]), first = title - 1, last = title + 1 }
+end
 
-  local line = lines[i] or ''
+local function single_line_heading(line, i)
   local h2 = line:match('^== (.-%S) ===+$')
   if h2 then
     return { level = 2, text = h2, first = i, last = i }
@@ -43,6 +40,43 @@ function M.heading(lines, i)
   if h3 then
     return { level = 3, text = h3, first = i, last = i }
   end
+end
+
+--- Returns { level, text, first, last } if line i is part of a heading.
+function M.heading(lines, i)
+  local t = h1_title_near(lines, i)
+  if t then
+    return h1(lines, t)
+  end
+  return single_line_heading(lines[i] or '', i)
+end
+
+--- Returns every heading in order, skipping ~~~ code blocks.
+function M.headings(lines)
+  local result, in_code, i = {}, false, 1
+  while i <= #lines do
+    local h
+    if lines[i]:match('^~~~') then
+      in_code = not in_code
+    elseif not in_code then
+      h = between_rules(lines, i + 1) and h1(lines, i + 1) or single_line_heading(lines[i], i)
+    end
+    if h then
+      table.insert(result, h)
+      i = h.last + 1
+    else
+      i = i + 1
+    end
+  end
+  return result
+end
+
+--- Returns the line and 0-based column where a heading's title starts.
+function M.title_pos(h)
+  if h.level == 1 then
+    return h.first + 1, 0
+  end
+  return h.first, 3
 end
 
 local function padded(lead, text, fill, width)
