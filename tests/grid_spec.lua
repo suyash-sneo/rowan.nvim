@@ -132,6 +132,12 @@ describe('grid.move', function()
     assert.same({ '| a | b |', '| x | ' }, lines())
   end)
 
+  it('treats the opening pipe as part of the first cell', function()
+    buffer(abc, 2, 0)
+    grid.move('right')
+    assert.same({ 2, 7 }, cursor())
+  end)
+
   it('lands at the start of an empty cell', function()
     buffer({ '| abc |     |' }, 1, 3)
     grid.move('right')

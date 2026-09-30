@@ -20,9 +20,10 @@ end
 -- The cell holding 0-based column col, and how far into the cell's text the cursor is.
 local function cell_at(line, col)
   local pipes = pipe_positions(line)
-  local k = #vim.tbl_filter(function(pos)
+  -- On or before the opening pipe counts as the first cell.
+  local k = math.max(1, #vim.tbl_filter(function(pos)
     return pos <= col
-  end, pipes)
+  end, pipes))
   local raw = parse.table_cells(line)[k]
   if raw then
     return k, math.max(0, col - pipes[k] - #raw:match('^%s*'))
