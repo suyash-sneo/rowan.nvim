@@ -1,10 +1,29 @@
 local config = require('rowan.config')
+local grid = require('rowan.grid')
 local keymaps = require('rowan.keymaps')
+local kv = require('rowan.kv')
 
 local M = {}
 
 function M.setup(opts)
   config.setup(opts)
+end
+
+local group = vim.api.nvim_create_augroup('rowan_buffer', { clear = true })
+
+local function watch(buf)
+  vim.api.nvim_clear_autocmds({ group = group, buffer = buf })
+  local function on(event, callback)
+    vim.api.nvim_create_autocmd(event, { group = group, buffer = buf, callback = callback })
+  end
+  on('TextChangedI', grid.on_text_changed)
+  on('InsertLeave', function()
+    grid.on_insert_leave()
+    kv.align({ join_undo = true })
+  end)
+  on('BufWritePre', function()
+    kv.align({ join_undo = true })
+  end)
 end
 
 function M.attach(buf)
@@ -24,12 +43,19 @@ function M.attach(buf)
   opt.foldlevel = 99
 
   keymaps.apply(buf)
+  vim.b[buf].rowan_live_align = config.options.live_align
+  watch(buf)
 
   -- Folds made by foldexpr outlive it as manual folds, so drop them before restoring.
   vim.b[buf].undo_ftplugin = 'setlocal foldmethod=manual | silent! normal! zE'
     .. ' | setlocal foldmethod< foldexpr< foldtext< foldlevel<'
     .. ' textwidth< autoindent< expandtab< shiftwidth< softtabstop< formatoptions<'
-    .. " | lua require('rowan.keymaps').remove(0)"
+    .. " | lua require('rowan').detach(0)"
+end
+
+function M.detach(buf)
+  keymaps.remove(buf)
+  vim.api.nvim_clear_autocmds({ group = group, buffer = buf })
 end
 
 return M

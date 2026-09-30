@@ -1,6 +1,8 @@
 local config = require('rowan.config')
+local grid = require('rowan.grid')
 local heading = require('rowan.heading')
 local inline = require('rowan.inline')
+local kv = require('rowan.kv')
 local list = require('rowan.list')
 local nav = require('rowan.nav')
 local pickers = require('rowan.pickers')
@@ -77,6 +79,14 @@ end)
 add('Lists (insert mode)', 'i', '<S-Tab>', 'Nest list item shallower', function()
   list.indent(-1)
 end)
+
+add('Tables', 'n', 'Pa', 'Align table (or key :: value block)', function()
+  if not grid.align() then
+    kv.align()
+  end
+end)
+add('Tables', 'n', 'PA', 'Toggle live table align', grid.toggle_live_align)
+add('Tables', 'n', 'Pn', 'New table (asks for columns x rows)', grid.new)
 
 local function expand(lhs)
   return (lhs:gsub('^P', function()

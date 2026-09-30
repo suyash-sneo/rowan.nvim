@@ -92,6 +92,117 @@ function M.list_item(line)
   end
 end
 
+--- Whether line i sits inside a ~~~ code block.
+function M.in_code(lines, i)
+  local inside = false
+  for n = 1, i - 1 do
+    if lines[n]:match('^~~~') then
+      inside = not inside
+    end
+  end
+  return inside
+end
+
+local function is_table_rule(line)
+  return line:match('^%s*%+[-=+]*%s*$') ~= nil
+end
+
+function M.is_table_line(line)
+  return is_table_rule(line) or line:match('^%s*|') ~= nil
+end
+
+--- Returns the first and last line of the table around line i.
+function M.table_range(lines, i)
+  if not (lines[i] and M.is_table_line(lines[i])) then
+    return
+  end
+  local first, last = i, i
+  while lines[first - 1] and M.is_table_line(lines[first - 1]) do
+    first = first - 1
+  end
+  while lines[last + 1] and M.is_table_line(lines[last + 1]) do
+    last = last + 1
+  end
+  return first, last
+end
+
+--- Returns a row's cells as typed, between the pipes. A closing pipe is optional.
+function M.table_cells(line)
+  local cells = vim.split(line, '|', { plain = true })
+  table.remove(cells, 1)
+  if cells[#cells] and not cells[#cells]:match('%S') then
+    table.remove(cells)
+  end
+  return cells
+end
+
+--- Returns each line of a table as 'rule' or a list of trimmed cells.
+function M.parse_table(lines)
+  return vim.tbl_map(function(line)
+    if is_table_rule(line) then
+      return 'rule'
+    end
+    return vim.tbl_map(vim.trim, M.table_cells(line))
+  end, lines)
+end
+
+local function column_widths(rows)
+  local widths = {}
+  for _, row in ipairs(rows) do
+    if row ~= 'rule' then
+      for k, cell in ipairs(row) do
+        widths[k] = math.max(widths[k] or 1, vim.api.nvim_strwidth(cell))
+      end
+    end
+  end
+  return widths
+end
+
+--- Renders rows from parse_table as an aligned grid, or nil if there are no cells.
+function M.render_table(rows, indent)
+  local widths = column_widths(rows)
+  if #widths == 0 then
+    return
+  end
+  return vim.tbl_map(function(row)
+    local parts = {}
+    for k, width in ipairs(widths) do
+      if row == 'rule' then
+        parts[k] = ('-'):rep(width + 2)
+      else
+        local cell = row[k] or ''
+        parts[k] = ' ' .. cell .. (' '):rep(width - vim.api.nvim_strwidth(cell)) .. ' '
+      end
+    end
+    local edge = row == 'rule' and '+' or '|'
+    return indent .. edge .. table.concat(parts, edge) .. edge
+  end, rows)
+end
+
+--- Returns the number of `key :: value` lines at the top of the file.
+function M.kv_length(lines)
+  local n = 0
+  while lines[n + 1] and lines[n + 1]:match('^%S.-::') do
+    n = n + 1
+  end
+  return n
+end
+
+--- Aligns the :: of key-value lines.
+function M.render_kv(lines)
+  local entries, width = {}, 0
+  for i, line in ipairs(lines) do
+    local key, value = line:match('^(.-)::(.*)$')
+    entries[i] = { vim.trim(key), vim.trim(value) }
+    width = math.max(width, vim.api.nvim_strwidth(entries[i][1]))
+  end
+  return vim.tbl_map(function(entry)
+    local key, value = unpack(entry)
+    local line = key .. (' '):rep(width - vim.api.nvim_strwidth(key)) .. ' :: ' .. value
+    return (line:gsub('%s+$', ''))
+  end, entries)
+end
+
 local function padded(lead, text, fill, width)
   local line = lead .. ' ' .. text .. ' '
   local pad = math.max(3, width - vim.api.nvim_strwidth(line))
