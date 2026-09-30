@@ -82,7 +82,7 @@ end
 -- At least two columns when they fit, more if the sheet is still taller than the screen.
 local function build_lines()
   local blocks, width = group_blocks()
-  local fit = math.floor((vim.o.columns - 2 + GAP) / (width + GAP))
+  local fit = math.floor((vim.o.columns - 4 + GAP) / (width + GAP))
   local most = math.max(1, math.min(fit, #blocks))
   local lines
   for count = math.min(2, most), most do
@@ -102,24 +102,28 @@ function M.open()
   vim.bo[buf].syntax = 'rowan'
   vim.bo[buf].modifiable = false
 
-  -- Leave room for the border so small terminals still show the whole float.
+  -- One column of margin on the right; room for the border so small terminals fit it all.
   local width = 0
   for _, line in ipairs(lines) do
-    width = math.max(width, #line)
+    width = math.max(width, #line + 1)
   end
   width = math.min(width, vim.o.columns - 2)
   local height = math.min(#lines, vim.o.lines - 4)
-  vim.api.nvim_open_win(buf, true, {
+  local win = vim.api.nvim_open_win(buf, true, {
     relative = 'editor',
     style = 'minimal',
     border = 'rounded',
     title = ' rowan keys ',
     title_pos = 'center',
+    footer = ' q to close ',
+    footer_pos = 'center',
     width = width,
     height = height,
     row = math.max(0, math.floor((vim.o.lines - height) / 2) - 1),
     col = math.max(0, math.floor((vim.o.columns - width) / 2) - 1),
   })
+  vim.wo[win].wrap = true
+  vim.wo[win].linebreak = true
   for _, key in ipairs({ 'q', '<Esc>' }) do
     vim.keymap.set('n', key, '<cmd>close<cr>', { buffer = buf, nowait = true })
   end
