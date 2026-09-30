@@ -36,6 +36,7 @@ vim.api.nvim_create_user_command('Rowan', function(cmd)
   require('rowan.command').run(cmd.fargs[1])
 end, {
   nargs = '?',
+  bar = true,
   desc = 'rowan notes: on, off, keys',
   complete = function(arglead)
     return require('rowan.command').complete(arglead)

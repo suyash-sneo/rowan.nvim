@@ -54,8 +54,10 @@ soft        ==text==                        This is ==probably== fine.
 literal     `text`                          Restart `auth-svc` first.
 ~~~
 
-STRONG is just uppercase, so the plugin cannot tell it apart from acronyms like API. Toggling it
-off lowercases the text.
+STRONG is just uppercase, so tools can't tell emphasis apart from acronyms exactly. The rule for
+detecting it: a run of two or more all-caps words (DO NOT MERGE), or one all-caps word of four or
+more letters (BLOCKED). Short acronyms like API or PR are not STRONG, and neither are ticket IDs
+like AUTH-112. Toggling STRONG off lowercases the text.
 
 == Lists and tasks =================================================================================
 
