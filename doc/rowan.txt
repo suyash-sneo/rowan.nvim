@@ -114,8 +114,9 @@ A table is a grid of `+---+` rules and `| cell |` rows: >
   +----------+-------+
 <
 Type rows loosely, like `|a|b`, and they are aligned as you type. The closing
-pipe is optional, and a new `|` adds a column. Tables inside `~~~` code blocks
-are left alone.
+pipe is optional, and a new `|` adds a column. In a row still being typed,
+`|` or <C-l> starts its next cell. Tables inside `~~~` code blocks are left
+alone.
 
 CTRL-I only reaches Neovim as its own key in terminals that tell it apart
 from <Tab>, such as kitty. Elsewhere <Tab> keeps working as usual.
@@ -128,7 +129,8 @@ insert mode and before writing.
 
 `[[Note]]` opens `Note.txt`: next to the current file first, then anywhere
 under `notes_dirs`, ignoring case. When there is no such note, a new buffer
-opens for it. `[[Note|Heading]]` also jumps to that heading.
+opens for it. `[[Note|Heading]]` also jumps to that heading. A note opened
+from a link is always a rowan note, wherever it lives.
 
 A long URL becomes a numbered reference with Pr: >
 
@@ -137,9 +139,10 @@ A long URL becomes a numbered reference with Pr: >
   [1] https://acme.atlassian.net/wiki/spaces/ENG/pages/482113/timeline
 <
 The definition goes at the end of the H2 section. Numbers follow the order of
-first use. <CR> on `[1]` jumps to the definition, and on the definition back
-to the first use. After each write, references with no definition, and
-definitions that are unused or repeated, show as warnings.
+first use, except while a reference has no definition. <CR> on `[1]` jumps
+to the definition, and on the definition back to the first use. After each
+write, references with no definition, and definitions that are unused or
+repeated, show as warnings.
 
 ==============================================================================
 7. Format                                                       *rowan-format*
