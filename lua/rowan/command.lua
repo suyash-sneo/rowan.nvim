@@ -13,6 +13,12 @@ M.subcommands = {
       vim.bo.filetype = 'text'
     end,
   },
+  renumber = {
+    desc = 'Renumber [n] references by first use',
+    run = function()
+      require('rowan.ref').renumber()
+    end,
+  },
   keys = {
     desc = 'Show all rowan keys',
     run = function()

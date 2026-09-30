@@ -203,11 +203,11 @@ function M.render_kv(lines)
   end, entries)
 end
 
--- The first match of pattern that spans 1-based column col.
-local function match_at(line, col, pattern)
+--- Returns the start and end of the first match of pattern that spans 1-based column col.
+function M.find_at(line, col, pattern, plain)
   local init = 1
   while true do
-    local s, e = line:find(pattern, init)
+    local s, e = line:find(pattern, init, plain)
     if not s or s > col then
       return
     end
@@ -220,16 +220,16 @@ end
 
 --- Returns the link at 1-based column col: { note, heading }, { ref } or { url }.
 function M.link_at(line, col)
-  local s, e = match_at(line, col, '%[%[.-%]%]')
+  local s, e = M.find_at(line, col, '%[%[.-%]%]')
   if s then
     local note, heading = line:sub(s + 2, e - 2):match('^([^|]*)|?(.*)$')
     return { note = vim.trim(note), heading = heading ~= '' and vim.trim(heading) or nil }
   end
-  s, e = match_at(line, col, '%[%d+%]')
+  s, e = M.find_at(line, col, '%[%d+%]')
   if s then
     return { ref = tonumber(line:sub(s + 1, e - 1)) }
   end
-  s, e = match_at(line, col, 'https?://%S+')
+  s, e = M.find_at(line, col, 'https?://%S+')
   if s then
     return { url = (line:sub(s, e):gsub('[%.,;:!%?%)%]>\'"]+$', '')) }
   end

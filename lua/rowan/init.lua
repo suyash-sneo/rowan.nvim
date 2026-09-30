@@ -2,6 +2,7 @@ local config = require('rowan.config')
 local grid = require('rowan.grid')
 local keymaps = require('rowan.keymaps')
 local kv = require('rowan.kv')
+local ref = require('rowan.ref')
 
 local M = {}
 
@@ -24,6 +25,9 @@ local function watch(buf)
   on('BufWritePre', function()
     kv.align({ join_undo = true })
   end)
+  on('BufWritePost', function()
+    ref.check(buf)
+  end)
 end
 
 function M.attach(buf)
@@ -45,6 +49,7 @@ function M.attach(buf)
   keymaps.apply(buf)
   vim.b[buf].rowan_live_align = config.options.live_align
   watch(buf)
+  ref.check(buf)
 
   -- Folds made by foldexpr outlive it as manual folds, so drop them before restoring.
   -- :normal would swallow the rest of the line, hence exe.
@@ -56,6 +61,7 @@ end
 
 function M.detach(buf)
   keymaps.remove(buf)
+  ref.clear(buf)
   vim.api.nvim_clear_autocmds({ group = group, buffer = buf })
 end
 

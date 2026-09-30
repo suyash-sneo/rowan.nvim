@@ -9,6 +9,7 @@ local link = require('rowan.link')
 local list = require('rowan.list')
 local nav = require('rowan.nav')
 local pickers = require('rowan.pickers')
+local ref = require('rowan.ref')
 
 local M = {}
 
@@ -67,6 +68,7 @@ add('Links', 'n', '<BS>', 'Go back', '<C-o>')
 add('Links', 'n', 'Pl', 'Insert [[link]] to a note', link.insert)
 add('Links', 'n', 'Pf', 'Find note', pickers.find)
 add('Links', 'n', 'P/', 'Search all notes', pickers.grep)
+add('Links', 'n', 'Pr', 'Turn URL into a [n] reference', ref.from_url)
 
 local text = { 'n', 'x' }
 add('Inline', text, 'Ps', 'Toggle STRONG (uppercase)', function()
