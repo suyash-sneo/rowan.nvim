@@ -13,35 +13,7 @@ and outline pickers.
 
 STATUS: early. The format spec is drafted and the plugin is not written yet.
 
-== What it looks like ==============================================================================
-
-~~~
-====================================================================================================
-Sprint 42 planning
-====================================================================================================
-
-Deploy is BLOCKED until the `auth-svc` fix lands. This is ==probably== fine.
-
-== Backlog review ==================================================================================
-
-DECISION: we ship behind a flag, default off.
-
--- Auth tickets ------------------------------------------------------------------------------------
-
-- token refresh bug, see the outage timeline [1]
-  * repro only in staging
-[ ] rotate prod keys
-[x] send RFC to team
-
-+----------+-------+-----------+
-| Ticket   | Owner | Status    |
-+----------+-------+-----------+
-| AUTH-112 | sneo  | in review |
-| PAY-88   | priya | blocked   |
-+----------+-------+-----------+
-
-[1] https://acme.atlassian.net/wiki/spaces/ENG/pages/482113/2026-09-28+Auth+outage+timeline
-~~~
+See `docs/example.txt` for a complete example note.
 
 == Format at a glance ==============================================================================
 
@@ -81,9 +53,10 @@ Plug 'suyash-sneo/rowan.nvim'
 == Repository layout ===============================================================================
 
 ~~~
-README.txt      this file, written in the rowan format
-LICENSE         GPL-3.0, covers the plugin code
-docs/spec.txt   the rowan format specification (CC BY 4.0, noted in its header)
+README.txt        this file, written in the rowan format
+LICENSE           GPL-3.0, covers the plugin code
+docs/spec.txt     the rowan format specification (CC BY 4.0, noted in its header)
+docs/example.txt  an example note that uses every part of the format
 ~~~
 
 == License =========================================================================================

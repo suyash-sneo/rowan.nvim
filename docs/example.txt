@@ -1,0 +1,68 @@
+date   :: 2026-09-29
+tags   :: auth, oncall
+ticket :: https://jira.acme.io/browse/AUTH-112
+
+====================================================================================================
+AUTH-112 token refresh bug
+====================================================================================================
+
+Deploy is BLOCKED until the `auth-svc` fix lands. The root cause is ==probably== clock skew, but
+we have not confirmed it yet. See also [[Auth service|Runbook]] and [[2026-09-28 daily log]].
+
+== Summary =========================================================================================
+
+Refresh tokens expire early for about 3% of users, which logs them out mid-session. It only happens
+on pods that were restarted in the last hour.
+
+NOTE: staging is shared with the payments team this week.
+BLOCKER: waiting on security sign-off before touching token TTLs.
+
+== Investigation ===================================================================================
+
+-- What we checked ---------------------------------------------------------------------------------
+
+- token TTL config matches across all pods
+- clock drift on the affected pods
+  * up to 40s behind on freshly started pods
+    + NTP sync only starts after the readiness probe passes
+- the outage timeline [1] lines up with the deploy at 14:02
+
+-- Pods affected -----------------------------------------------------------------------------------
+
++--------------+--------+-------------+---------+
+| Pod          | Uptime | Clock drift | Logouts |
++--------------+--------+-------------+---------+
+| auth-svc-7d9 | 12m    | -41s        | 312     |
+| auth-svc-4b2 | 3h     | 0s          | 0       |
+| auth-svc-9f1 | 25m    | -18s        | 97      |
++--------------+--------+-------------+---------+
++--------------+--------+-------------+---------+
+-- Repro -------------------------------------------------------------------------------------------
+
+~~~ sh
+kubectl rollout restart deploy/auth-svc -n auth
+kubectl exec auth-svc-7d9 -n auth -- date -u
+~~~
+
+Grafana panel with the drift graph: [2]
+
+[1] https://acme.atlassian.net/wiki/spaces/ENG/pages/482113/2026-09-28+Auth+outage+timeline
+[2] https://grafana.acme.io/d/abc123/auth-svc?orgId=1&from=now-6h&to=now&var-pod=auth-svc-7d9
+
+== Standup notes ===================================================================================
+
+> from Priya:
+> can we push the rollout to Thursday?
+
+DECISION: ship the fix behind a flag, default off, and roll out on Thursday.
+
+== Next steps ======================================================================================
+
+[x] confirm clock drift on restarted pods
+[ ] move NTP sync before the readiness probe
+[ ] add a drift alert on the auth dashboard
+[>] review token TTLs (moved to next sprint)
+
+----------------------------------------------------------------------------------------------------
+
+Every line in this file is plain text. Open it with `cat`, any editor, or paste it anywhere.
