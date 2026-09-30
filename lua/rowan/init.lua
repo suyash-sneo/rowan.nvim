@@ -1,4 +1,5 @@
 local config = require('rowan.config')
+local keymaps = require('rowan.keymaps')
 
 local M = {}
 
@@ -15,7 +16,10 @@ function M.attach(buf)
   -- textwidth is for gq; don't hard-wrap while typing tables and URLs.
   bo.formatoptions = bo.formatoptions:gsub('t', '')
 
+  keymaps.apply(buf)
+
   vim.b[buf].undo_ftplugin = 'setlocal textwidth< expandtab< shiftwidth< softtabstop< formatoptions<'
+    .. " | lua require('rowan.keymaps').remove(0)"
 end
 
 return M
