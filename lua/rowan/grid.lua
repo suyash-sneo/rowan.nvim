@@ -46,6 +46,12 @@ local function cursor_cell(line, col, keep_typed)
   return k, math.min(offset, #text), text
 end
 
+-- While a row is being typed, show only the cells typed so far, so the next | starts the
+-- next cell instead of adding a column.
+local function only_typed_cells(line, count)
+  return line:sub(1, pipe_positions(line)[count + 1])
+end
+
 local function align(opts)
   local lnum, col = unpack(vim.api.nvim_win_get_cursor(0))
   local first, last, lines = table_at(lnum)
@@ -60,6 +66,9 @@ local function align(opts)
   end
 
   local new = parse.render_table(rows, lines[1]:match('^%s*'))
+  if new and opts.keep_typed and rows[r] ~= 'rule' then
+    new[r] = only_typed_cells(new[r], math.max(1, #rows[r]))
+  end
   if not new or vim.deep_equal(new, lines) then
     return true
   end
@@ -125,6 +134,9 @@ function M.new()
     local gap = vim.fn.getline(lnum):match('%S') and 1 or 0
     if gap == 1 then
       table.insert(lines, 1, '')
+    end
+    if vim.fn.getline(lnum + 1):match('%S') then
+      table.insert(lines, '')
     end
     vim.api.nvim_buf_set_lines(0, lnum, lnum, false, lines)
     local header = lnum + gap + 2

@@ -82,6 +82,14 @@ describe('grid.align', function()
     assert.same({ '| foo |', '| x   |' }, lines())
   end)
 
+  it('shows only the typed cells of a row being typed, so | starts the next cell', function()
+    buffer({ '| Ticket | Owner |', '| AUTH-9 |' }, 2, 8)
+    grid.on_text_changed()
+    assert.same({ '| Ticket | Owner |', '| AUTH-9 |' }, lines())
+    grid.on_insert_leave()
+    assert.same({ '| Ticket | Owner |', '| AUTH-9 |       |' }, lines())
+  end)
+
   it('only aligns live when enabled', function()
     buffer({ '|a|bb|' }, 1, 1)
     vim.b.rowan_live_align = false
