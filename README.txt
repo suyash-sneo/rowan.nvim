@@ -39,10 +39,10 @@ The rowan, or mountain ash, is a small, hardy tree that grows where little else 
 mountainsides and in thin soil, and carries bright red berries into winter.
 
 In Celtic and northern European folklore it is a tree of protection. Rowan twigs were hung over
-doors and byres, and crosses of rowan tied with red thread were worn to keep enchantment away, as
-an old Scottish rhyme has it: "rowan tree and red thread hold the witches all in dread". In the
-Norse myths, Thor was nearly swept away while wading the river Vimur and saved himself by catching hold
-of a rowan on the bank.
+doors and byres, and crosses of rowan tied with red thread were worn to keep enchantment away, as an
+old Scottish rhyme has it: "rowan tree and red thread hold the witches all in dread". In the Norse
+myths, Thor was nearly swept away while wading the river Vimur and saved himself by catching hold of
+a rowan on the bank.
 
 That is the spirit of this project: a small, sturdy format that keeps your notes safe from lock-in
 and legible wherever they end up.
