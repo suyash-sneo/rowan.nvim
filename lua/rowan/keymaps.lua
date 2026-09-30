@@ -70,6 +70,14 @@ end)
 add('Tasks', text, 'Px', 'Cycle task: plain > [ ] > [x] > [ ]', list.task_cycle)
 add('Tasks', text, 'P>', 'Mark task moved [>]', list.task_moved)
 
+add('Lists (insert mode)', 'i', '<CR>', 'Continue list, or end it on an empty item', list.enter)
+add('Lists (insert mode)', 'i', '<Tab>', 'Nest list item deeper', function()
+  list.indent(1)
+end)
+add('Lists (insert mode)', 'i', '<S-Tab>', 'Nest list item shallower', function()
+  list.indent(-1)
+end)
+
 local function expand(lhs)
   return (lhs:gsub('^P', function()
     return config.options.prefix

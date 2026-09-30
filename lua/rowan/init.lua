@@ -10,6 +10,7 @@ end
 function M.attach(buf)
   local bo = vim.bo[buf]
   bo.textwidth = config.options.width
+  bo.autoindent = true
   bo.expandtab = true
   bo.shiftwidth = 2
   bo.softtabstop = 2
@@ -27,7 +28,7 @@ function M.attach(buf)
   -- Folds made by foldexpr outlive it as manual folds, so drop them before restoring.
   vim.b[buf].undo_ftplugin = 'setlocal foldmethod=manual | silent! normal! zE'
     .. ' | setlocal foldmethod< foldexpr< foldtext< foldlevel<'
-    .. ' textwidth< expandtab< shiftwidth< softtabstop< formatoptions<'
+    .. ' textwidth< autoindent< expandtab< shiftwidth< softtabstop< formatoptions<'
     .. " | lua require('rowan.keymaps').remove(0)"
 end
 

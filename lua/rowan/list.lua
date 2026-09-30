@@ -1,3 +1,4 @@
+local keys = require('rowan.keys')
 local parse = require('rowan.parse')
 
 local M = {}
@@ -66,6 +67,62 @@ end
 --- Marks [>] moved, or back to [ ] if it already is.
 function M.task_moved()
   update_lines(moved)
+end
+
+local markers = { '-', '*', '+' }
+
+-- Nesting picks the marker: - then * then +, repeating.
+local function marker_for(indent)
+  local depth = math.floor(#indent / vim.fn.shiftwidth())
+  return markers[depth % #markers + 1]
+end
+
+local function prefix_length(item)
+  return #item.indent + (item.task and 4 or 2)
+end
+
+-- The list item on the cursor line, if the cursor is past its marker.
+local function item_before_cursor()
+  local item = parse.list_item(vim.api.nvim_get_current_line())
+  if item and vim.fn.col('.') > prefix_length(item) then
+    return item
+  end
+end
+
+--- Insert-mode <CR>: starts the next item, or ends the list on an empty one.
+function M.enter()
+  local item = not keys.completion_visible() and item_before_cursor()
+  if not item then
+    keys.fall_back('i', '<CR>')
+  elseif vim.trim(item.text) == '' then
+    vim.api.nvim_set_current_line('')
+  else
+    keys.feed(vim.keycode('<CR>') .. (item.task and '[ ] ' or item.marker .. ' '))
+  end
+end
+
+local function shift_item(item, dir)
+  local width = #item.indent + dir * vim.fn.shiftwidth()
+  if width < 0 then
+    return
+  end
+  local indent = (' '):rep(width)
+  local head = item.task and ('[%s]'):format(item.task) or marker_for(indent)
+  local line = vim.api.nvim_get_current_line()
+  local new = ('%s%s %s'):format(indent, head, item.text)
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  vim.api.nvim_set_current_line(new)
+  vim.api.nvim_win_set_cursor(0, { row, math.max(0, col + #new - #line) })
+end
+
+--- Insert-mode <Tab>/<S-Tab>: nests a list item deeper (dir 1) or shallower (-1).
+function M.indent(dir)
+  local item = not keys.completion_visible() and parse.list_item(vim.api.nvim_get_current_line())
+  if item then
+    shift_item(item, dir)
+  else
+    keys.fall_back('i', dir > 0 and '<Tab>' or '<S-Tab>')
+  end
 end
 
 return M

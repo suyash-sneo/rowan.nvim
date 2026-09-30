@@ -1,3 +1,4 @@
+local keymaps = require('rowan.keymaps')
 local list = require('rowan.list')
 local parse = require('rowan.parse')
 
@@ -6,6 +7,15 @@ local function buffer(lines, lnum)
   vim.api.nvim_set_current_buf(buf)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.api.nvim_win_set_cursor(0, { lnum or 1, 0 })
+  vim.bo.shiftwidth = 2
+  vim.bo.expandtab = true
+  vim.bo.softtabstop = 2
+  vim.bo.autoindent = true
+  keymaps.apply(buf)
+end
+
+local function type(keys)
+  vim.api.nvim_feedkeys(vim.keycode(keys), 'xt', false)
 end
 
 local function lines()
@@ -74,5 +84,53 @@ describe('tasks', function()
     vim.cmd('normal! Vj')
     list.task_cycle()
     assert.same({ '[ ] a', '[ ] b', 'c' }, lines())
+  end)
+end)
+
+describe('typing lists', function()
+  it('continues bullets and tasks on Enter', function()
+    buffer({ '  * one', '[x] done' })
+    type('A<CR>two<Esc>jA<CR>next<Esc>')
+    assert.same({ '  * one', '  * two', '[x] done', '[ ] next' }, lines())
+  end)
+
+  it('ends the list on an empty item', function()
+    buffer({ '- one' })
+    type('A<CR><CR>after<Esc>')
+    assert.same({ '- one', 'after' }, lines())
+  end)
+
+  it('splits an item when Enter is pressed mid-text', function()
+    buffer({ '- one two' })
+    type('0fti<CR><Esc>')
+    assert.same({ '- one ', '- two' }, lines())
+  end)
+
+  it('leaves Enter alone on plain lines and before the marker', function()
+    buffer({ 'plain', '- item' })
+    type('A<CR>x<Esc>jI<CR><Esc>')
+    assert.same({ 'plain', 'x', '', '- item' }, lines())
+  end)
+
+  it('nests and un-nests with Tab and S-Tab, changing the marker', function()
+    buffer({ '- item' })
+    type('A<Tab><Esc>')
+    assert.same({ '  * item' }, lines())
+    type('A<Tab><Esc>')
+    assert.same({ '    + item' }, lines())
+    type('A<S-Tab><S-Tab><S-Tab><Esc>')
+    assert.same({ '- item' }, lines())
+  end)
+
+  it('keeps the checkbox when nesting a task', function()
+    buffer({ '[ ] task' })
+    type('A<Tab>!<Esc>')
+    assert.same({ '  [ ] task!' }, lines())
+  end)
+
+  it('keeps Tab as a Tab on plain lines', function()
+    buffer({ 'a' })
+    type('A<Tab>b<Esc>')
+    assert.same({ 'a b' }, lines())
   end)
 end)
