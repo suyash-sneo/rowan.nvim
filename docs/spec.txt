@@ -140,7 +140,7 @@ Neovim plugin
 
 The filetype is `rowan`. It activates for `*.txt` files under the configured `notes_dirs`, which
 is an empty list by default. Anywhere else, turn it on with `:set ft=rowan` or a modeline. All
-keys are buffer-local. P means `<space>`.
+keys are buffer-local. P means `<space>`, and P? lists every key inside Neovim.
 
 == Keymaps =========================================================================================
 
@@ -158,14 +158,14 @@ keys are buffer-local. P means `<space>`.
 | Tab  S-Tab | i    | on a bullet: indent / outdent (marker - * +)             |
 | C-i  C-k   | i    | table: row up / row down (stops at edges)                |
 | C-j  C-l   | i    | table: previous cell / next cell (stops at edges)        |
-| Pa         | n    | align table now                                          |
+| Pa         | n    | align table (or key :: value block) now                  |
 | PA         | n    | toggle live table alignment                              |
 | Pn         | n    | new table (asks for columns x rows)                      |
 | Pki  Pkd   | n    | table: insert / delete column                            |
 | Pkh  Pkl   | n    | table: move column left / right                          |
 | Pkr  Pkx   | n    | table: add row below / delete row                        |
-| ]]  [[     | n    | next / previous heading, any level                       |
-| ]1 ]2 ]3   | n    | next heading of that level (and [1 [2 [3 for previous)   |
+| ]]  [[     | n, v | next / previous heading, any level                       |
+| ]1 ]2 ]3   | n, v | next heading of that level (and [1 [2 [3 for previous)   |
 | Enter      | n    | follow a note link, a [n] reference or a URL             |
 | BS  C-o    | n    | go back                                                  |
 | Pl         | n    | pick a note or heading and insert a [[link]]             |
@@ -195,6 +195,5 @@ can tell Ctrl-i apart from Tab, but inside tmux or over SSH they may arrive as t
 == Later ===========================================================================================
 
 [ ] Obsidian converter: .md to .txt, including `#heading` to `|heading` and long URLs to references
-[ ] notes_dirs configuration
 [ ] templates (daily log, meeting, ticket)
 

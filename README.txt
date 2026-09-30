@@ -11,7 +11,7 @@ kind of structure uses characters you can tell apart at a glance. This repo hold
 and a Neovim plugin for writing it: heading toggles, auto-aligned tables, cell navigation, links
 and outline pickers.
 
-STATUS: early. The format spec is drafted and the plugin is not written yet.
+STATUS: v0.1. The format and the plugin work day to day; expect small changes.
 
 See `docs/example.txt` for a complete example note.
 
@@ -38,17 +38,21 @@ Files are `.txt` and laid out for 100 columns. The full spec is in `docs/spec.tx
 
 == Install =========================================================================================
 
-Not ready yet. Once the plugin exists, installing it will look like this:
+Requires Neovim 0.11 or newer. fzf-lua is optional and makes the pickers nicer.
 
 ~~~ vim
 " vim-plug
 Plug 'suyash-sneo/rowan.nvim'
+lua require('rowan').setup({ notes_dirs = { '~/notes' } })
 ~~~
 
 ~~~ lua
 -- lazy.nvim
 { 'suyash-sneo/rowan.nvim', opts = { notes_dirs = { '~/notes' } } }
 ~~~
+
+`.txt` files under `notes_dirs` open as rowan notes. Anywhere else, run `:Rowan` to switch a buffer
+on. Press `<space>?` in a note to see every key, and read `:help rowan` for the details.
 
 == Repository layout ===============================================================================
 
@@ -57,6 +61,12 @@ README.txt        this file, written in the rowan format
 LICENSE           GPL-3.0, covers the plugin code
 docs/spec.txt     the rowan format specification (CC BY 4.0, noted in its header)
 docs/example.txt  an example note that uses every part of the format
+doc/rowan.txt     :help rowan
+plugin/           filetype detection and the :Rowan command
+ftplugin/         buffer setup for rowan notes
+syntax/           highlighting
+lua/rowan/        the plugin, one module per feature
+tests/            plenary tests, run with `make test`
 ~~~
 
 == License =========================================================================================

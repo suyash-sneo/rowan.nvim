@@ -1,0 +1,162 @@
+*rowan.txt*  Plain-text notes that still look structured
+
+==============================================================================
+CONTENTS                                                      *rowan-contents*
+
+  1. Introduction ........................................ |rowan-intro|
+  2. Setup ............................................... |rowan-setup|
+  3. Commands ............................................ |rowan-commands|
+  4. Keys ................................................ |rowan-keys|
+  5. Tables .............................................. |rowan-tables|
+  6. Links and references ................................ |rowan-links|
+  7. Format .............................................. |rowan-format|
+
+==============================================================================
+1. Introduction                                                  *rowan-intro*
+
+rowan is a pure-ASCII alternative to markdown for day-to-day notes. Files are
+`.txt`, laid out for 100 columns, and read well with `cat`. This plugin
+highlights the format and adds keys for headings, lists, tables and links.
+
+The format is specified in `docs/spec.txt` in the repository.
+
+==============================================================================
+2. Setup                                                         *rowan-setup*
+
+Without any setup, turn a buffer into a rowan note with |:Rowan|. To make
+`.txt` files under your notes directories rowan notes automatically: >lua
+
+  require('rowan').setup({
+    notes_dirs = { '~/notes' },
+  })
+<
+Options and their defaults:
+
+  notes_dirs   `{}`         Directories whose `.txt` files are rowan notes.
+                          They are also where links and pickers look. With
+                          none, they look next to the current file.
+  width        `100`        Width of heading rules, and 'textwidth'.
+  prefix       `'<space>'`  Prefix of the rowan keys, written P below.
+  live_align   `true`       Realign tables while typing in them.
+  keymaps      `true`       Set the keys below. With `false`, none are set.
+
+==============================================================================
+3. Commands                                                   *rowan-commands*
+
+                                                                      *:Rowan*
+:Rowan [on]         Treat the current buffer as a rowan note.
+:Rowan off          Back to plain text.
+:Rowan keys         Show every rowan key in a floating window (also P?).
+:Rowan renumber     Renumber `[n]` references in order of first use.
+
+==============================================================================
+4. Keys                                                           *rowan-keys*
+
+All keys are local to rowan buffers. P is the prefix, `<space>` by default.
+P? shows them all, grouped, inside Neovim.
+
+Headings ~
+  P1 P2 P3        Make the line an H1, H2 or H3.
+  P0              Back to plain text.
+  Ph PH           Cycle plain > H1 > H2 > H3 and back.
+  >> <<           On a heading: demote, promote. Elsewhere: indent as usual.
+
+Navigate ~
+  ]] [[           Next, previous heading. Take a count; work with operators.
+  ]1 ]2 ]3        Next H1, H2, H3; [1 [2 [3 for the previous one.
+  Po              Outline of this file.
+  PO              Headings of all notes.
+  za zc zo zM zR  Folds follow the headings and start open.
+
+Inline and tasks (normal and visual mode) ~
+  Ps              Toggle STRONG (uppercase) on the word or selection.
+  Pi              Toggle ==soft==.
+  Pc              Toggle `literal`.
+  Px              Cycle a task: plain > [ ] > [x] > [ ].
+  P>              Mark a task moved: [>].
+
+Lists (insert mode) ~
+  <CR>            Continue the bullet or task; on an empty item, end the list.
+  <Tab> <S-Tab>   Nest a list item deeper or shallower; the marker follows
+                  the depth: - then * then +.
+
+Tables ~
+  Pa              Align the table or key :: value block under the cursor.
+  PA              Toggle live table alignment.
+  Pn              New table; asks for a size like 3x2 (columns x rows).
+  Pki Pkd         Insert a column after this one, delete this column.
+  Pkh Pkl         Move this column left, right.
+  Pkr Pkx         Add a row below, delete this row.
+  <C-i> <C-k>     Insert mode: move to the cell above, below.
+  <C-j> <C-l>     Insert mode: move to the previous, next cell.
+
+Links ~
+  <CR>            Follow the [[note]], [n] reference or URL under the cursor.
+  <BS>            Go back (like CTRL-O).
+  Pl              Pick a note, and optionally a heading, and insert a link.
+  Pf              Find a note by name.
+  P/              Search the text of all notes.
+  Pr              Turn the URL under the cursor into a [n] reference.
+
+Keys that rowan only uses in some places, such as <CR>, <Tab> and the CTRL
+keys, do what they did before everywhere else, including CoC's completion
+mappings. When a completion menu is open, it gets <CR>, <Tab> and <S-Tab>.
+
+==============================================================================
+5. Tables                                                       *rowan-tables*
+
+A table is a grid of `+---+` rules and `| cell |` rows: >
+
+  +----------+-------+
+  | Ticket   | Owner |
+  +----------+-------+
+  | AUTH-112 | sneo  |
+  +----------+-------+
+<
+Type rows loosely, like `|a|b`, and they are aligned as you type. The closing
+pipe is optional, and a new `|` adds a column. Tables inside `~~~` code blocks
+are left alone.
+
+CTRL-I only reaches Neovim as its own key in terminals that tell it apart
+from <Tab>, such as kitty. Elsewhere <Tab> keeps working as usual.
+
+The `key :: value` block at the top of a file is aligned when you leave
+insert mode and before writing.
+
+==============================================================================
+6. Links and references                                          *rowan-links*
+
+`[[Note]]` opens `Note.txt`: next to the current file first, then anywhere
+under `notes_dirs`, ignoring case. When there is no such note, a new buffer
+opens for it. `[[Note|Heading]]` also jumps to that heading.
+
+A long URL becomes a numbered reference with Pr: >
+
+  See the outage timeline [1].
+
+  [1] https://acme.atlassian.net/wiki/spaces/ENG/pages/482113/timeline
+<
+The definition goes at the end of the H2 section. Numbers follow the order of
+first use. <CR> on `[1]` jumps to the definition, and on the definition back
+to the first use. After each write, references with no definition, and
+definitions that are unused or repeated, show as warnings.
+
+==============================================================================
+7. Format                                                       *rowan-format*
+
+  H1          a line of = above and below the title
+  H2          == Section =====...
+  H3          -- Topic -------...
+  STRONG      uppercase
+  soft        ==text==
+  literal     `text`
+  bullets     - then * then + by nesting level
+  tasks       [ ] [x] [>]
+  tables      +---+ ASCII grid
+  code        ~~~ lang ... ~~~
+  links       bare URL, or [1] with the URL defined below the section
+  note links  [[Note]] [[Note|Heading]]
+  callouts    NOTE: DECISION: BLOCKER:     quotes: >
+  metadata    optional key :: value lines at the top of the file
+
+ vim:tw=78:ts=8:ft=help:norl:
